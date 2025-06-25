@@ -15,8 +15,6 @@ LG Ultra é uma aplicação web feita com Django que permite visualizar rotas BG
 ## 📸 Capturas de Tela
 
 | Tema Claro | Tema Escuro |
-|------------|-------------|
-| ![Light](docs/screenshot-light.png) | ![Dark](docs/screenshot-dark.png) |
 
 ## ⚙️ Tecnologias Utilizadas
 
