@@ -27,16 +27,45 @@ LG Ultra é uma aplicação web feita com Django que permite visualizar rotas BG
 - [Chart.js](https://www.chartjs.org/)
 - [Bootstrap Icons](https://icons.getbootstrap.com)
 
-## 🚀 Instalação
+
+## 🌐 LG Ultra - Looking Glass Web Interface (English)
+
+**LG Ultra** is a web application built with Django that allows interactive and visual inspection of BGP routes and AS_PATH information. Ideal for ISPs, IXPs, and network engineers who want to understand how their prefixes are being advertised across the Internet.
+
+### ✨ Features
+
+- 🔎 BGP Lookup with IP or prefix input  
+- 🧮 Automatic AS_PATH analysis (last, penultimate, and antepenultimate AS)  
+- 🧠 Detection of **Tier 1** AS presence  
+- 📊 Dynamic charts using **Chart.js**  
+- 🎨 Modern UI with **Bootstrap 5**  
+- 🌙 Dark/light mode with persistent theme  
+- 🇧🇷 Portuguese user interface  
+
+### 📸 Screenshots
+
+| Dark Theme | Light Theme |
+|------------|-------------|
+| ![Dark](https://raw.githubusercontent.com/GabrielMend/LG_ULTRA/main/assets/black.png) | ![Light](https://raw.githubusercontent.com/GabrielMend/LG_ULTRA/main/assets/light.png) |
+
+### ⚙️ Tech Stack
+
+- [Python 3.11+](https://www.python.org)
+- [Django 5+](https://www.djangoproject.com/)
+- [Bootstrap 5](https://getbootstrap.com)
+- [Chart.js](https://www.chartjs.org/)
+- [Bootstrap Icons](https://icons.getbootstrap.com)
+
+### 🚀 Installation
 
 ```bash
 git clone https://github.com/GabrielMend/LG_ULTRA.git
 cd LG_ULTRA
 python -m venv venv
-venv\Scripts\activate   # No Windows
+venv\Scripts\activate   # On Windows
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 
 
-Em breve Dockerfile e também a aplicação na AWS 
+
