@@ -79,7 +79,6 @@ def only_as_path(data):
 
 ##### TRATAMENTO DE DADOS DO ASN ######
 def verify_top_asns(data):
-    print(data)
     excluir_asns = {
         '6939': 'Hurricane Electric LLC United States',
         '6427': 'Hurricane Electric LLC United States',
@@ -200,4 +199,29 @@ def get_asn_name_multi(asn):
     save_asn_cache(asn_cache)
     return fallback
 
-# === Lógica de cálculo de Top ASN ===
+
+###### PARTE DO CÓDIGO QUE VERIFICA  A PRESENÇA DE TIER 1 NO AS PATH, CASO NÃO TENHA É PROVAVEL QUE DEVIDO A ESPECIFICIDADE SÓ ESTEJA ENVIANDO PARA IX/PNI #####
+### CARREGANDO O JSON COM OS TIER ONE ###
+TIER_ONE_CACHE = 'tier_one.json'
+def load_tier_asn():
+    if os.path.exists(TIER_ONE_CACHE):
+        with open(TIER_ONE_CACHE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
+def verifica_tier1(dados):
+    tier1_found = False
+    tier1_asns =  load_tier_asn()
+    tier1_present = set()  # para guardar os ASNs que apareceram
+    for entry in dados:
+        as_path_list = entry['as_path'].split()
+        for asn in as_path_list:
+            if asn in tier1_asns:
+                tier1_found = True
+                tier1_present.add(asn)
+    print(tier1_present)
+    if tier1_found:
+        return 0
+    else:
+        return "NÃO FORAM ENCONTRADOS TIER1 NO AS PATH, PROVAVEL ANUNCIO SOMENTE PARA IX/PNI"

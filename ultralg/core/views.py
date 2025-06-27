@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_protect
-from .services import get_most_specific_route_and_as_path, verify_top_asns
+from .services import get_most_specific_route_and_as_path, verify_top_asns, verifica_tier1
 
 @csrf_protect
 def home(request):
@@ -17,7 +17,9 @@ def home(request):
             ripe = get_most_specific_route_and_as_path(target)
             result = ripe
             top_ans = verify_top_asns(result)
+            tier1 = verifica_tier1(result)
 
 
 
-    return render(request, 'core/index.html', {'result': result, 'top_ans': top_ans})
+
+    return render(request, 'core/index.html', {'result': result, 'top_ans': top_ans, 'tier1': tier1})
