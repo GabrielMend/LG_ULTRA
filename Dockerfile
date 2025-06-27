@@ -10,4 +10,7 @@ COPY . .
 
 EXPOSE 8000
 
+ENV DJANGO_SETTINGS_MODULE=ultralg.ultralg.settings
+
+
 CMD ["gunicorn", "ultralg.wsgi:application", "--bind", "0.0.0.0:8000"]
