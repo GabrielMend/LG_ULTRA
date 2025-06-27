@@ -31,6 +31,7 @@ def get_most_specific_route_and_as_path(resource):
         return {"error": f"Erro na requisição: {e}"}
     # aqui onde vamos tratar os dados com as funções que estão abaixo #
     data = resp.json()
+    print(data)
     dados = get_one_router_per_country(data)
     best_routes_only = only_as_path(dados)
     return best_routes_only

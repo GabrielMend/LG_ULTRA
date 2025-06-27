@@ -5,7 +5,8 @@ from .services import get_most_specific_route_and_as_path, verify_top_asns, veri
 @csrf_protect
 def home(request):
     result = None
-    top_ans = None 
+    top_ans = None
+    tier1 = None
     if request.method == 'POST':
         command = request.POST.get('command')
         target = request.POST.get('target')
