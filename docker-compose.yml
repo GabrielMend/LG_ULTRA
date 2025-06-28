@@ -4,6 +4,7 @@ services:
   web:
     build: .
     container_name: lg_ultra
+    # Se quiser alterar a porta, só alterar aqui, lado esquerdo cotainer, somente do lado direito é a porta do host #
     ports:
       - "8000:8000"
     volumes:
