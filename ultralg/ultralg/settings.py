@@ -6,7 +6,7 @@ SECRET_KEY = 'troque_esse_valor_por_uma_chave_secreta_segura'
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'core',
