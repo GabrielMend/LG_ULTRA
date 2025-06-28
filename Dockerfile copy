@@ -13,7 +13,7 @@ EXPOSE 8000
 ENV DJANGO_SETTINGS_MODULE=ultralg.ultralg.settings
 
 
-CMD ["sh", "-c", "gunicorn --chdir /app ultralg.wsgi:application --bind 0.0.0.0:8000 --workers $(python -c 'import multiprocessing as m; print((2 * m.cpu_count()) + 1)')"]
+CMD ["gunicorn", "--chdir", "ultralg", "ultralg.wsgi:application", "--bind", "0.0.0.0:8000"]
 
 
 
