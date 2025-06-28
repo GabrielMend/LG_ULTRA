@@ -16,4 +16,4 @@ ENV PYTHONPATH=/app
 
 ENV DJANGO_SETTINGS_MODULE=ultralg.ultralg.settings
 
-CMD ["sh", "-c", "gunicorn --chdir /app ultralg.ultralg.wsgi:application --bind 0.0.0.0:8000 --workers $(python -c 'import multiprocessing as m; print((2 * m.cpu_count()) + 1)')"]
+CMD ["sh", "-c", "gunicorn ultralg.ultralg.wsgi:application --bind 0.0.0.0:8000 --workers $((2 * $(nproc) + 1))"]
