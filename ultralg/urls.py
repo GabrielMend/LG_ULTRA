@@ -3,5 +3,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('core.urls')),   # inclui as URLs da app core na raiz
+    path('', include('ultralg.core.urls')),   # inclui as URLs da app core na raiz
 ]
