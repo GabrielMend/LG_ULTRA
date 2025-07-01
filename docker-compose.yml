@@ -4,11 +4,13 @@ services:
   web:
     build: .
     container_name: lg_ultra
-    # Se quiser alterar a porta, só alterar aqui, lado esquerdo cotainer, somente do lado direito é a porta do host #
+    # Se quiser alterar a porta, só alterar aqui, lado esquerdo container, somente do lado direito é a porta do host #
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+    dns:
+      - 8.8.8.8
     restart: unless-stopped
