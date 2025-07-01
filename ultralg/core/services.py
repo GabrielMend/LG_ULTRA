@@ -4,6 +4,8 @@ import random
 import os
 import json
 import requests
+import pathlib
+
 
 """Service Ultra Glass
 esse serviços.py é usado para separar as funçõees de lógica da view do DJANGO. 
@@ -146,7 +148,9 @@ def verify_top_asns(data):
 ###### PEGAR NOME DO ASN #######
 # === Cache persistente ===
 # ALem de consultar 3 bases diferentes randomicamente, para não ocorrer two many requests #
-ASN_CACHE_FILE = 'asn_cache.json'
+BASE_DIR = pathlib.Path(__file__).parent  # pasta onde está services.py
+ASN_CACHE_FILE = BASE_DIR / 'asn_cache.json'
+TIER_ONE_CACHE = BASE_DIR / 'tier_one.json'
 
 def load_asn_cache():
     if os.path.exists(ASN_CACHE_FILE):
