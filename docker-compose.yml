@@ -4,13 +4,22 @@ services:
   web:
     build: .
     container_name: lg_ultra
-    # Se quiser alterar a porta, só alterar aqui, lado esquerdo container, somente do lado direito é a porta do host #
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
-    dns:
-      - 8.8.8.8
+    networks:
+      - mybridge
     restart: unless-stopped
+
+networks:
+  mybridge:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
+        - subnet: "fd12:3456:789a::/64"
