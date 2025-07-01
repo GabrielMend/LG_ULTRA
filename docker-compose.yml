@@ -10,16 +10,4 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
-    networks:
-      - mybridge
     restart: unless-stopped
-
-networks:
-  mybridge:
-    driver: bridge
-    enable_ipv6: true
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.22.0.0/16
-        - subnet: "fd12:3456:789a::/64"
