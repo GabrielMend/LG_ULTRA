@@ -14,4 +14,4 @@ EXPOSE 8000
 ENV PYTHONPATH=/app
 ENV DJANGO_SETTINGS_MODULE=ultralg.ultralg.settings
 
-CMD sh -c "gunicorn ultralg.ultralg.wsgi:application --bind 0.0.0.0:8000 --workers $((2 * $(nproc) + 1))"
+CMD sh -c "gunicorn ultralg.wsgi:application --bind 0.0.0.0:8000 --workers $((2 * $(nproc) + 1))"
