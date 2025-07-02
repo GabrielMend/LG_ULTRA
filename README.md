@@ -1,4 +1,20 @@
-# 🌐 LG Ultra - Looking Glass Web Interface
+# 🌐 LG Ultra – Looking Glass Web Interface
+
+**LG Ultra** é uma aplicação web feita com Django que permite visualizar rotas BGP e caminhos AS_PATH de forma interativa e visual.  
+Ideal para operadoras, IXPs e engenheiros de rede que desejam observar como seus prefixos estão sendo anunciados na internet.
+
+> ⚠️ **Atenção**: Para melhor desempenho e cobertura de rotas, recomenda-se o uso de conexões com suporte a **IPv6**.
+
+> ⚠️ **Note**: For better performance and full route visibility, it is recommended to access the service over an **IPv6-enabled connection**.
+
+---
+
+## 🚀 Instalação
+
+```bash
+git clone https://github.com/GabrielMend/LG_ULTRA.git
+cd LG_ULTRA
+docker-compose up -d
 
 LG Ultra é uma aplicação web feita com Django que permite visualizar rotas BGP e caminhos AS_PATH de forma interativa e visual. Ideal para operadoras, IXPs e engenheiros de rede que desejam observar como seus prefixos estão sendo anunciados na internet.
 
@@ -56,16 +72,7 @@ LG Ultra é uma aplicação web feita com Django que permite visualizar rotas BG
 - [Chart.js](https://www.chartjs.org/)
 - [Bootstrap Icons](https://icons.getbootstrap.com)
 
-### 🚀 Installation
 
-```bash
-git clone https://github.com/GabrielMend/LG_ULTRA.git
-cd LG_ULTRA
-python -m venv venv
-venv\Scripts\activate   # On Windows
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
 
 
 
