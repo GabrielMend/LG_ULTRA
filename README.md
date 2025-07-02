@@ -14,7 +14,7 @@ Ideal para operadoras, IXPs e engenheiros de rede que desejam observar como seus
 ```bash
 git clone https://github.com/GabrielMend/LG_ULTRA.git
 cd LG_ULTRA
-docker-compose up -d
+docker-compose up -d\
 
 LG Ultra é uma aplicação web feita com Django que permite visualizar rotas BGP e caminhos AS_PATH de forma interativa e visual. Ideal para operadoras, IXPs e engenheiros de rede que desejam observar como seus prefixos estão sendo anunciados na internet.
 
