@@ -1,0 +1,16 @@
+app = "gabri-lingering-cherry-3876"
+primary_region = "ord"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1      # garante pelo menos 1 máquina rodando
+  max_machines_running = 1      # limita a 1 máquina no máximo
+  processes = ["app"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 2

@@ -6,7 +6,25 @@ SECRET_KEY = 'troque_esse_valor_por_uma_chave_secreta_segura'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATIC_URL = '/static/'
+
+# Se você tiver pastas extras com estáticos durante o desenvolvimento, defina STATICFILES_DIRS
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+ALLOWED_HOSTS = [
+    'gabri-lingering-cherry-3876.fly.dev',
+    'localhost',
+    '127.0.0.1',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://gabri-lingering-cherry-3876.fly.dev",
+]
 
 INSTALLED_APPS = [
     'ultralg.core',
