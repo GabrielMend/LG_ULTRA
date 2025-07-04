@@ -17,13 +17,13 @@ STATICFILES_DIRS = [
 ]
 
 ALLOWED_HOSTS = [
-    'gabri-lingering-cherry-3876.fly.dev',
+    'ultralg.fly.dev',
     'localhost',
     '127.0.0.1',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://gabri-lingering-cherry-3876.fly.dev",
+    "https://ultralg.fly.dev",
 ]
 
 INSTALLED_APPS = [
