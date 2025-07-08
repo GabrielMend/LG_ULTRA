@@ -154,6 +154,10 @@
                     <span class="fw-semibold text-muted">AS_PATH:</span>
                     <span class="font-monospace text-dark small">{{ item.as_path }}</span>
                   </p>
+                  <p class="card-text mb-0">
+                    <span class="fw-semibold text-muted">Last Update:</span>
+                    <span class="font-monospace text-dark small">{{ item.last_updated }} UTC-0</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -267,16 +271,19 @@
 
   <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="qrModalLabel">Doação via Pix</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img src="{% static 'core/img/pix_qrcode.png' %}" alt="QR Code Pix" class="img-fluid" style="max-width: 300px;">
-        <p class="mt-3">Escaneie o QR Code para doar via Pix</p>
-      </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="qrModalLabel">Doação via Pix</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
     </div>
+    <div class="modal-body text-center">
+      <img src="https://raw.githubusercontent.com/GabrielMend/LG_ULTRA/main/ultralg/core/static/core/img/pix_qrcode.png" alt="QR Code Pix" class="img-fluid" style="max-width: 300px;">
+      <p class="mt-3 text-dark">
+        Se este projeto te ajuda de alguma forma, considere apoiar com uma doação via Pix 🙌<br>
+        Escaneie o QR Code com seu app bancário.
+      </p>
+    </div>
+  </div>
   </div>
 </div>
     </body>

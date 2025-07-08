@@ -66,11 +66,13 @@ def only_as_path(data):
         for peer in rrc_item.get('peers', []):
             as_path = peer.get('as_path')
             prefix = peer.get('prefix')
+            age = peer.get('last_updated')
             if as_path and prefix:
                 resultado.append({
                     'location': pais,
                     'as_path': as_path,
-                    'prefix': prefix
+                    'prefix': prefix,
+                    'last_updated': age
                 })
 
     return resultado
