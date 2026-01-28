@@ -7,6 +7,8 @@ def home(request):
     result = None
     top_ans = None
     tier1 = None
+    hide_navbar = request.GET.get("hide_navbar") == "1"
+
     if request.method == 'POST':
         command = request.POST.get('command')
         target = request.POST.get('target')
@@ -14,13 +16,14 @@ def home(request):
         if not command or not target:
             result = "Erro: comando e destino são obrigatórios."
         else:
-            
             ripe = get_most_specific_route_and_as_path(target)
             result = ripe
             top_ans = verify_top_asns(result)
             tier1 = verifica_tier1(result)
 
-
-
-
-    return render(request, 'core/index.html', {'result': result, 'top_ans': top_ans, 'tier1': tier1})
+    return render(request, 'core/index.html', {
+        'result': result,
+        'top_ans': top_ans,
+        'tier1': tier1,
+        'hide_navbar': hide_navbar  # agora é dinâmico
+    })
