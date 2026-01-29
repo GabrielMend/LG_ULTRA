@@ -214,6 +214,20 @@
       border-radius: 0;
     }
 
+    .alert-success {
+      background-color: rgba(0, 255, 65, 0.1);
+      border: 1px solid var(--hud-success);
+      color: var(--hud-success);
+      border-radius: 0;
+    }
+
+    .alert-danger {
+      background-color: rgba(255, 0, 60, 0.1);
+      border: 1px solid var(--hud-danger);
+      color: var(--hud-danger);
+      border-radius: 0;
+    }
+
     /* UTILS */
     .text-muted {
       color: var(--hud-muted) !important;
@@ -321,6 +335,24 @@
       <div class="text-start">
         <strong class="d-block text-uppercase">Tier-1 Detected</strong>
         <span class="font-monospace">{{ tier1 }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if rpki %}
+    <div
+      class="alert {% if rpki.status == 'VALID' %}alert-success{% elif 'INVALID' in rpki.status %}alert-danger{% else %}alert-warning{% endif %} text-center d-flex align-items-center justify-content-center mt-3"
+      role="alert">
+      <i
+        class="bi {% if rpki.status == 'VALID' %}bi-shield-fill-check{% elif 'INVALID' in rpki.status %}bi-shield-fill-x{% else %}bi-shield-fill-exclamation{% endif %} me-3 fs-4"></i>
+      <div class="text-start">
+        <strong class="d-block">
+          RPKI ORIGIN VALIDATION: {{ rpki.status }}
+          {% if rpki.max_length %}
+          <span class="ms-2">LIMIT: {{ rpki.max_length_str }}</span>
+          {% endif %}
+        </strong>
+        <span class="font-monospace small">{{ rpki.raw_message }}</span>
       </div>
     </div>
     {% endif %}

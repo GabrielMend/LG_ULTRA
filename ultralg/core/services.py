@@ -30,12 +30,12 @@ def get_most_specific_route_and_as_path(resource):
         resp = requests.get(url, timeout=1) # 1 sec timeout
         resp.raise_for_status()
     except requests.RequestException as e:
-        return {"error": f"Erro na requisição: {e}"}
+        return {"error": f"Erro na requisição: {e}"}, None
     # aqui onde vamos tratar os dados com as funções que estão abaixo #
     data = resp.json()
     dados = get_one_router_per_country(data)
     best_routes_only = only_as_path(dados)
-    return best_routes_only
+    return best_routes_only, data
 
 
 ##### espaço para tratar JSON do RIPE #######
@@ -229,4 +229,100 @@ def verifica_tier1(dados):
     if tier1_found:
         return 0
     else:
-        return "NÃO FORAM ENCONTRADOS TIER1 NO AS PATH, PROVAVEL ANUNCIO SOMENTE PARA IX/PNI"
+        return "NÃO FORAM ENCONTRADOS TIER1 NO AS PATH, PROVAVEL ANUNCIO SOMENTE PARA IX E PNI"
+
+
+###### Essa parte do código é destinada para verificar o RPKI e ROA #######
+
+###### Essa parte do código é destinada para verificar o RPKI e ROA #######
+
+def extract_origin_asn(lg_data):
+    """
+    Extrai o ASN de origem a partir dos dados do Looking Glass.
+    Retorna o ASN (str) ou None se não encontrar.
+    """
+    try:
+        # Tenta pegar a lista de RRCs
+        rrcs = lg_data.get('data', {}).get('rrcs', [])
+        if not rrcs:
+            return None
+        
+        # Pega o primeiro peer do primeiro RRC (Geralmente consistente para Origin ASN)
+        first_rrc = rrcs[0]
+        peers = first_rrc.get('peers', [])
+        
+        if not peers:
+            return None
+            
+        return str(peers[0].get('asn_origin'))
+        
+    except (AttributeError, IndexError, TypeError):
+        return None
+
+def fetch_rpki_validation(asn, prefix):
+    """
+    Consulta a API de validação RPKI do RIPE e retorna um dicionário limpo.
+    """
+    url = f"https://stat.ripe.net/data/rpki-validation/data.json?resource=AS{asn}&prefix={prefix}"
+    
+    try:
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=3)
+        response.raise_for_status()
+        data = response.json()
+        
+        # Acessa os dados reais dentro da resposta do RIPE
+        rpki_data = data.get('data', {})
+        
+        # Normaliza o status para facilitar no front-end
+        status = rpki_data.get('status', 'unknown')
+        validating_roas = rpki_data.get('validating_roas', [])
+        
+        # Tenta pegar o max_length da primeira ROA válida, se houver
+        max_len = None
+        if validating_roas:
+            max_len = validating_roas[0].get('max_length')
+
+        message = f"O status RPKI é {status} para o AS{asn}."
+        if max_len:
+            message += f" (Max Length: {max_len})"
+
+        return {
+            "status": status.upper(),  # 'VALID', 'INVALID_ASN', 'INVALID_LENGTH', 'UNKNOWN'
+            "origin_asn": asn,
+            "prefix": prefix,
+            "max_length": max_len,
+            "max_length_str": str(max_len) if max_len else "",
+            "roas_found": validating_roas,
+            "raw_message": message
+        }
+
+    except requests.RequestException:
+        return {
+            "status": "ERROR",
+            "origin_asn": asn,
+            "prefix": prefix,
+            "roas_found": [],
+            "raw_message": "Erro ao conectar com a API RPKI."
+        }
+
+def take_asn_and_verify_rpki_roa(prefix, lg_data):
+    """
+    Função Principal (Orquestradora):
+    1. Recebe o prefixo e os dados do Looking Glass já consultados anteriormente.
+    2. Extrai o ASN de origem do Looking Glass.
+    3. Valida esse ASN + Prefixo na base RPKI.
+    """
+    
+    # 1. Tenta descobrir quem está anunciando o IP (Origin ASN)
+    origin_asn = extract_origin_asn(lg_data)
+    
+    if not origin_asn:
+        return {
+            "status": "ERROR_NO_ASN",
+            "raw_message": "Não foi possível identificar o ASN de origem nos dados do Looking Glass para validar o RPKI."
+        }
+
+    # 2. Com o ASN em mãos, faz a validação RPKI
+    resultado_rpki = fetch_rpki_validation(origin_asn, prefix)
+    
+    return resultado_rpki
