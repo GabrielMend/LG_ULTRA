@@ -84,11 +84,6 @@ def only_as_path(data):
 ##### TRATAMENTO DE DADOS DO ASN ######
 def verify_top_asns(data):
     excluir_asns = {
-        '6939': 'Hurricane Electric LLC United States',
-        '6427': 'Hurricane Electric LLC United States',
-        '393338': 'Hurricane Electric LLC United States',
-        '20341': 'Hurricane Labs, LLC United States',
-        '18850': 'Hurricane Computer Solutions Inc.',
         # Retirado a HURRICANE do LG para não gerar falso positivo #
     }
 
