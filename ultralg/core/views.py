@@ -39,8 +39,15 @@ def home(request):
     tier1 = None
     rpki = None
     hide_navbar = request.GET.get("hide_navbar") == "1"
+    
+    # Shareable URL support: pre-fill form from query params
+    command_param = request.GET.get("type", "")
+    target_param = request.GET.get("address", "")
+    
+    # Auto-execute if valid params are present
+    auto_execute = bool(command_param and target_param)
 
-    if request.method == 'POST':
+    if request.method == 'POST' or auto_execute:
         # --- Verificação do Captcha (se necessário) ---
         if require_captcha:
             turnstile_token = request.POST.get('cf-turnstile-response')
@@ -67,8 +74,13 @@ def home(request):
         if captcha_error:
             result = None
         else:
-            command = request.POST.get('command')
-            target = request.POST.get('target')
+            # Support both POST form and GET query params
+            if request.method == 'POST':
+                command = request.POST.get('command')
+                target = request.POST.get('target')
+            else:  # auto_execute from query params
+                command = command_param
+                target = target_param
 
             if not command or not target:
                 result = "Erro: comando e destino são obrigatórios."
@@ -96,5 +108,7 @@ def home(request):
         'hide_navbar': hide_navbar,
         'show_captcha': require_captcha,
         'turnstile_site_key': settings.TURNSTILE_SITE_KEY,
-        'captcha_error': captcha_error
+        'captcha_error': captcha_error,
+        'command_value': command_param or request.POST.get('command', ''),
+        'target_value': target_param or request.POST.get('target', ''),
     })
