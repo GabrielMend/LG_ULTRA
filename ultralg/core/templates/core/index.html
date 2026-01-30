@@ -262,6 +262,9 @@
       background-color: var(--hud-panel) !important;
     }
   </style>
+  {% if show_captcha %}
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  {% endif %}
 </head>
 
 <body>
@@ -294,6 +297,14 @@
       <p class="text-muted text-uppercase letter-spacing-2">System Ready // Awaiting Input</p>
     </div>
 
+    {% if captcha_error %}
+    <div class="alert alert-danger text-center mb-4" role="alert"
+      style="background: rgba(255, 0, 60, 0.15); border: 1px solid var(--hud-danger);">
+      <h4 class="alert-heading text-uppercase"><i class="bi bi-shield-lock me-2"></i>Security Verification Required</h4>
+      <p class="mb-0">High traffic detected from your network. Please verify you are human.</p>
+    </div>
+    {% endif %}
+
     <form id="lgForm" method="POST" action="" class="p-4"
       style="background: rgba(0,243,255,0.02); border: 1px dashed #2d3748;">
       {% csrf_token %}
@@ -311,6 +322,11 @@
             pattern="^((([0-9]{1,3}\.){3}[0-9]{1,3})(\/[0-9]{1,2})?|([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}(\/\d{1,3})?)$"
             title="Valid IPv4/IPv6 or Prefix required" required />
         </div>
+        {% if show_captcha %}
+        <div class="col-12 d-flex justify-content-center my-3">
+          <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="dark"></div>
+        </div>
+        {% endif %}
         <div class="col-sm-3 d-grid">
           <label class="form-label small text-muted text-uppercase">&nbsp;</label>
           <button type="submit" class="btn btn-primary">

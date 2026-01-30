@@ -96,6 +96,20 @@ USE_I18N = True
 
 USE_TZ = True
 
+
 STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuração de Cache no Banco de Dados (para Rate Limiting)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'my_cache_table',
+    }
+}
+
+# Cloudflare Turnstile (CAPTCHA)
+# Obtenha as chaves em: https://dash.cloudflare.com/sign-up/turnstile
+TURNSTILE_SITE_KEY = 'SUA_SITE_KEY_AQUI'     # Ex: 0x4AAAAAA...
+TURNSTILE_SECRET_KEY = 'SUA_SECRET_KEY_AQUI' # Ex: 0x4AAAAAA...
