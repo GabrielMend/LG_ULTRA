@@ -85,7 +85,7 @@ def home(request):
                     tier1 = verifica_tier1(result)
                     
                     if lg_data:
-                        rpki = take_asn_and_verify_rpki_roa(target, lg_data)
+                        rpki = take_asn_and_verify_rpki_roa(lg_data)
                         
 
     return render(request, 'core/index.html', {

@@ -229,7 +229,7 @@ def verifica_tier1(dados):
     if tier1_found:
         return 0
     else:
-        return "NÃO FORAM ENCONTRADOS TIER1 NO AS PATH, PROVAVEL ANUNCIO SOMENTE PARA IX E PNI"
+        return "NO TIER-1 FOUND IN AS PATH, LIKELY ANNOUNCEMENT ONLY TO IX AND PNI"
 
 
 ###### Essa parte do código é destinada para verificar o RPKI e ROA #######
@@ -259,6 +259,35 @@ def extract_origin_asn(lg_data):
     except (AttributeError, IndexError, TypeError):
         return None
 
+def extract_prefix(lg_data):
+    """
+    Extrai o Prefixo a partir dos dados do Looking Glass.
+    Retorna o Prefixo (str) ou None se não encontrar.
+    """
+    try:
+        # Tenta pegar a lista de RRCs dentro de 'data'
+        rrcs = lg_data.get('data', {}).get('rrcs', [])
+        
+        # Se a lista de RRCs estiver vazia, retorna None
+        if not rrcs:
+            return None
+        
+        # Pega o primeiro RRC da lista
+        first_rrc = rrcs[0]
+        
+        # Pega a lista de peers dentro desse RRC
+        peers = first_rrc.get('peers', [])
+        
+        # Se a lista de peers estiver vazia, retorna None
+        if not peers:
+            return None
+            
+        # Retorna o prefixo do primeiro peer encontrado
+        return str(peers[0].get('prefix'))
+        
+    except (AttributeError, IndexError, TypeError):
+        return None
+
 def fetch_rpki_validation(asn, prefix):
     """
     Consulta a API de validação RPKI do RIPE e retorna um dicionário limpo.
@@ -282,7 +311,7 @@ def fetch_rpki_validation(asn, prefix):
         if validating_roas:
             max_len = validating_roas[0].get('max_length')
 
-        message = f"O status RPKI é {status} para o AS{asn}."
+        message = f"RPKI status is {status} for AS{asn}."
         if max_len:
             message += f" (Max Length: {max_len})"
 
@@ -305,7 +334,7 @@ def fetch_rpki_validation(asn, prefix):
             "raw_message": "Erro ao conectar com a API RPKI."
         }
 
-def take_asn_and_verify_rpki_roa(prefix, lg_data):
+def take_asn_and_verify_rpki_roa(lg_data):
     """
     Função Principal (Orquestradora):
     1. Recebe o prefixo e os dados do Looking Glass já consultados anteriormente.
@@ -315,6 +344,7 @@ def take_asn_and_verify_rpki_roa(prefix, lg_data):
     
     # 1. Tenta descobrir quem está anunciando o IP (Origin ASN)
     origin_asn = extract_origin_asn(lg_data)
+    prefix = extract_prefix(lg_data)
     
     if not origin_asn:
         return {
