@@ -86,7 +86,7 @@ def home(request):
                     
                     if lg_data:
                         rpki = take_asn_and_verify_rpki_roa(target, lg_data)
-                        print(f"DEBUG RPKI DATA: {rpki}")
+                        
 
     return render(request, 'core/index.html', {
         'result': result,
