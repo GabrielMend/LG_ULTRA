@@ -261,6 +261,19 @@
       border-top: var(--hud-border);
       background-color: var(--hud-panel) !important;
     }
+    /* BGP Intel Modal HUD Extras */
+    #bgpIntelModal .modal-content {
+      border: 2px solid var(--hud-primary) !important;
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.3) !important;
+    }
+    #bgpIntelModal .modal-header {
+      background: linear-gradient(90deg, rgba(0,243,255,0.05) 0%, transparent 100%);
+    }
+    .intel-bar {
+      font-family: var(--hud-font);
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
   </style>
   {% if show_captcha %}
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -404,12 +417,17 @@
 
     {% if result %}
     <div class="mt-5">
-      <h4 class="mb-4 text-uppercase border-start border-3 border-primary ps-3"
-        style="border-color: var(--hud-primary) !important;">
-        Query Results <span class="badge bg-transparent border border-secondary text-secondary rounded-0 ms-2"
-          id="resultCount">{{
-          result|length }}</span>
-      </h4>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="text-uppercase border-start border-3 border-primary ps-3 mb-0"
+          style="border-color: var(--hud-primary) !important;">
+          Query Results <span class="badge bg-transparent border border-secondary text-secondary rounded-0 ms-2"
+            id="resultCount">{{ result|length }}</span>
+        </h4>
+        <button type="button" class="btn btn-sm btn-primary" onclick="generateBgpReport()" 
+          style="text-shadow: 0 0 5px var(--hud-primary); border-radius: 0;">
+          <i class="bi bi-cpu me-2"></i>GENERATE BGP INTEL
+        </button>
+      </div>
 
       <!-- ASN FILTERS -->
       <div class="row g-3 mb-4" style="background: rgba(0,0,0,0.2); padding: 15px; border: 1px dotted #2d3748;">
@@ -455,6 +473,14 @@
         {% endfor %}
       </div>
     </div>
+    {% endif %}
+
+    <!-- BGP Intelligence Data (Raw Source) -->
+    {% if raw_bgp_data %}
+    {{ raw_bgp_data|json_script:"bgp-raw-data" }}
+    <script>console.log("BGP_RAW_DATA: LOADED", JSON.parse(document.getElementById('bgp-raw-data').textContent));</script>
+    {% else %}
+    <script>console.warn("BGP_RAW_DATA: NOT FOUND IN CONTEXT");</script>
     {% endif %}
   </main>
 
@@ -651,8 +677,293 @@
         }, 2000);
       });
     }
+
+    // --- BGP INTELLIGENCE UTILS ---
+    const WELL_KNOWN_COMMUNITIES = {
+      '65535:0': 'PLANNED_SHUTDOWN',
+      '65535:65281': 'NO_EXPORT',
+      '65535:65282': 'NO_ADVERTISE',
+      '65535:65283': 'NO_EXPORT_SUBCONFED',
+      '65535:65284': 'NO_PEER'
+    };
+
+    const asnCache = {};
+    async function getAsnName(asn) {
+      if (asnCache[asn]) return asnCache[asn];
+      try {
+        const resp = await fetch(`https://stat.ripe.net/data/as-overview/data.json?resource=${asn}`);
+        const json = await resp.json();
+        const name = json.data?.holder || `AS${asn}`;
+        asnCache[asn] = name;
+        return name;
+      } catch (e) {
+        return `AS${asn}`;
+      }
+    }
+
+    // --- BGP INTELLIGENCE ENGINE ---
+    async function generateBgpReport() {
+      console.log("BGP_INTEL: Analysis triggered");
+      const dataContainer = document.getElementById('bgp-raw-data');
+      if (!dataContainer) {
+        console.error("BGP_INTEL: Data source 'bgp-raw-data' missing");
+        alert("EXECUTION_REQUIRED: Run a BGP lookup first to analyze data.");
+        return;
+      }
+
+      let raw;
+      try {
+        raw = JSON.parse(dataContainer.textContent);
+        console.log("BGP_INTEL: Data parsed", raw);
+      } catch (e) {
+        console.error("ANALYSIS_FAILURE: Failed to parse BGP data", e);
+        return;
+      }
+
+      const rrcs = raw.data?.rrcs || [];
+      let allPeers = [];
+      rrcs.forEach(rrc => {
+        if (rrc.peers) {
+          rrc.peers.forEach(p => allPeers.push({
+            ...p,
+            rrc_location: rrc.location
+          }));
+        }
+      });
+
+      console.log("BGP_INTEL: Total probes found:", allPeers.length);
+
+      if (allPeers.length === 0) {
+        alert("DATA_MISSING: No probe results found for analysis.");
+        return;
+      }
+
+      const totalCount = allPeers.length;
+      const upstreams = {};
+      const origins = {};
+      const communities = {};
+      const countries = {};
+      const pathLengths = [];
+
+      allPeers.forEach(p => {
+        const path = p.as_path ? p.as_path.split(' ') : [];
+        if (path.length > 0) {
+          pathLengths.push(path.length);
+          const origin = p.asn_origin || path[path.length - 1];
+          origins[origin] = (origins[origin] || 0) + 1;
+          
+          if (path.length >= 2) {
+            const upstream = path[path.length - 2];
+            upstreams[upstream] = (upstreams[upstream] || 0) + 1;
+          }
+        }
+
+        if (p.community) {
+          p.community.split(' ').forEach(c => {
+            if (c) communities[c] = (communities[c] || 0) + 1;
+          });
+        }
+
+        // Parse Country and Track Upstreams per region
+        if (p.rrc_location) {
+          const parts = p.rrc_location.split(',');
+          const country = parts[parts.length - 1].trim();
+          if (!countries[country]) {
+            countries[country] = { count: 0, upstreams: {} };
+          }
+          countries[country].count++;
+
+          const pathArr = p.as_path ? p.as_path.split(' ') : [];
+          if (pathArr.length >= 2) {
+            const up = pathArr[pathArr.length - 2];
+            countries[country].upstreams[up] = (countries[country].upstreams[up] || 0) + 1;
+          }
+        }
+      });
+
+      // Stats Calculate
+      const sortedUpstreams = Object.entries(upstreams).sort((a,b) => b[1]-a[1]).slice(0, 5);
+      
+      const winnersPerCountry = Object.entries(countries)
+        .sort((a,b) => b[1].count - a[1].count)
+        .slice(0, 10)
+        .map(([name, data]) => {
+          const winnerEntry = Object.entries(data.upstreams).sort((a,b) => b[1]-a[1])[0];
+          return {
+            name,
+            totalProbes: data.count,
+            dominantAsn: winnerEntry ? winnerEntry[0] : 'N/A',
+            dominantCount: winnerEntry ? winnerEntry[1] : 0
+          };
+        });
+
+      const sortedCommunities = Object.entries(communities).sort((a,b) => b[1]-a[1]).slice(0, 8);
+      const avgPathLen = (pathLengths.reduce((a,b)=>a+b,0) / pathLengths.length).toFixed(1);
+      const originKeys = Object.keys(origins);
+      const isConsistent = originKeys.length === 1;
+
+      // HUD UI Helpers
+      const termBar = (pct) => {
+        const len = 15;
+        const fill = Math.round((pct/100)*len);
+        return `<span style="color:var(--hud-primary)">${'█'.repeat(fill)}</span><span style="color:#2d3748">${'░'.repeat(len-fill)}</span>`;
+      };
+
+      let html = `
+        <div class="row g-4 mb-4">
+          <div class="col-12 text-center p-3" style="background: rgba(0, 243, 255, 0.05); border: 1px dashed var(--hud-primary);">
+            <h6 class="text-muted small mb-1 ls-2">TARGET_RESOURCE_UNDER_ANALYSIS</h6>
+            <h3 class="text-white mb-2" style="letter-spacing: 2px;">${allPeers[0].prefix || 'UNKNOWN'}</h3>
+            <div class="d-flex justify-content-center gap-3 mt-2 flex-wrap">
+              <span class="badge rounded-0 border border-secondary text-uppercase">Probes: ${totalCount}</span>
+              <span class="badge rounded-0 border border-info text-uppercase">Avg_Path: ${avgPathLen}</span>
+              <span class="badge rounded-0 border ${isConsistent ? 'border-success text-success' : 'border-danger text-danger'} text-uppercase">
+                Origin: ${isConsistent ? 'STABLE' : 'DIVERGENT'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3 text-uppercase"><i class="bi bi-diagram-2 me-2"></i>Upstream_Transit_Share_ASN</h6>
+            <div class="card bg-transparent border-0">
+              ${sortedUpstreams.length ? sortedUpstreams.map(([asn, count]) => {
+                const pct = ((count/totalCount)*100).toFixed(1);
+                return `
+                  <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                      <span class="text-muted font-monospace">AS${asn}</span>
+                      <span class="text-primary">${pct}%</span>
+                    </div>
+                    <div class="intel-bar">${termBar(pct)}</div>
+                  </div>
+                `;
+              }).join('') : '<p class="text-muted small">NO_PATH_DATA</p>'}
+            </div>
+
+            <h6 class="text-primary mt-4 mb-3 text-uppercase"><i class="bi bi-globe me-2"></i>Infrastructure_Geography_Transit</h6>
+            <div id="countryTransitList" class="card bg-transparent border-0">
+               <div class="text-muted small italic mb-2">Calculating geographic transit share...</div>
+               ${winnersPerCountry.length ? winnersPerCountry.map(c => {
+                 return `
+                   <div class="mb-3 p-2" style="background: rgba(255,255,255,0.02); border-left: 2px solid #2d3748;">
+                     <div class="d-flex justify-content-between small mb-1">
+                       <span class="text-white fw-bold">${c.name}</span>
+                       <span class="text-muted" style="font-size:0.7rem;">${c.totalProbes} PROBES</span>
+                     </div>
+                     <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-info font-monospace small">AS${c.dominantAsn}</span>
+                        <span class="text-muted small" style="font-size: 0.65rem;">MOST_FREQUENT</span>
+                     </div>
+                   </div>
+                 `;
+               }).join('') : '<p class="text-muted small">NO_GEO_DATA</p>'}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="text-primary mb-3 text-uppercase"><i class="bi bi-shield-shaded me-2"></i>Origin_Integrity_Check</h6>
+            <div class="p-3 border ${isConsistent ? 'border-success' : 'border-danger'}" style="background: rgba(0,0,0,0.3);">
+              <div class="small text-uppercase mb-2 text-muted ls-1">Status:</div>
+              <div class="${isConsistent ? 'text-success' : 'text-danger'} fw-bold mb-3 font-monospace">
+                ${isConsistent ? '[ PASSED ] SINGLE_ORIGIN_VERIFIED' : '[ ALERT ] MOAS_DETECTED'}
+              </div>
+              <div class="small text-muted">
+                ${isConsistent 
+                  ? `Consensus reached across ${totalCount} probes for <strong>AS${originKeys[0]}</strong>` 
+                  : `Multiple Origin Conflict detected (${originKeys.length} ASNs): <strong>${originKeys.join(', ')}</strong>`}
+              </div>
+            </div>
+
+            <h6 class="text-primary mt-4 mb-3 text-uppercase"><i class="bi bi-tags me-2"></i>Frequency_SIGNAL_COMMUNITIES</h6>
+            <div id="communitiesList" class="small">
+              <div class="text-muted mb-2 italic">Analyzing community descriptions...</div>
+              <div class="d-flex flex-wrap gap-2 text-info small">
+                ${sortedCommunities.map(([c, count]) => `
+                  <div class="p-2 border border-info w-100 mb-1 d-flex justify-content-between align-items-center" style="background: rgba(0, 243, 255, 0.05);">
+                    <span>${c}</span>
+                    <span class="badge border border-info text-info">${count}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-3 border-top border-secondary text-center">
+            <p class="text-muted small font-monospace text-uppercase" style="letter-spacing: 5px;">END_OF_INTEL_REPORT // HUD_STABLE</p>
+        </div>
+      `;
+
+      const contentDiv = document.getElementById('bgpIntelContent');
+      if (contentDiv) {
+        contentDiv.innerHTML = html;
+      }
+      
+      const modalElem = document.getElementById('bgpIntelModal');
+      const modal = bootstrap.Modal.getOrCreateInstance(modalElem);
+      modal.show();
+
+      // Async Update Communities with Names/Descriptions
+      const commList = document.getElementById('communitiesList');
+      if (commList && sortedCommunities.length) {
+        const enriched = await Promise.all(sortedCommunities.map(async ([c, count]) => {
+          let desc = WELL_KNOWN_COMMUNITIES[c] || "";
+          let asnName = "";
+          const [asnPart] = c.split(':');
+          if (!desc && asnPart) {
+            asnName = await getAsnName(asnPart);
+          }
+          return { c, count, desc, asnName };
+        }));
+
+        commList.innerHTML = `
+          <div class="d-flex flex-column gap-2">
+            ${enriched.map(e => `
+              <div class="p-2 border border-info w-100 d-flex flex-column" style="background: rgba(0, 243, 255, 0.05);">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <span class="font-monospace text-info">${e.c}</span>
+                  <span class="badge border border-info text-info">${e.count}x</span>
+                </div>
+                ${e.desc ? `<div class="text-success small fw-bold"><i class="bi bi-info-circle me-1"></i>${e.desc}</div>` : ""}
+                ${e.asnName ? `<div class="text-muted x-small italic">${e.asnName}</div>` : ""}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // Async Update Country Transit Names
+      const geoList = document.getElementById('countryTransitList');
+      if (geoList && winnersPerCountry.length) {
+        const enrichedGeo = await Promise.all(winnersPerCountry.map(async (c) => {
+          const asnName = c.dominantAsn !== 'N/A' ? await getAsnName(c.dominantAsn) : '';
+          return { ...c, asnName };
+        }));
+
+        geoList.innerHTML = enrichedGeo.map(c => `
+          <div class="mb-3 p-2" style="background: rgba(0, 243, 255, 0.02); border-left: 2px solid var(--hud-primary);">
+            <div class="d-flex justify-content-between small mb-1">
+              <span class="text-white fw-bold">${c.name}</span>
+              <span class="text-muted" style="font-size:0.7rem;">${c.totalProbes} PROBES</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+               <div class="d-flex flex-column">
+                  <span class="text-info font-monospace small">AS${c.dominantAsn}</span>
+                  ${c.asnName ? `<span class="text-muted italic" style="font-size: 0.6rem;">${c.asnName}</span>` : ''}
+               </div>
+               <span class="badge border border-secondary text-secondary" style="font-size: 0.6rem;">${((c.dominantCount/c.totalProbes)*100).toFixed(0)}% DOMINANCE</span>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
   </script>
 
+  </div>
+
+  <!-- Support/PIX Modal -->
   <div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content text-white"
@@ -662,7 +973,6 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body text-center">
-          <!-- Optional: Filter image to look monochrome/green if you want -->
           <img
             src="https://raw.githubusercontent.com/GabrielMend/LG_ULTRA/main/ultralg/core/static/core/img/pix_qrcode.png"
             alt="QR Code Pix" class="img-fluid border border-secondary p-1 rounded-0" style="max-width: 250px;">
@@ -670,6 +980,23 @@
             SCAN_QR_CODE // PIX<br>
             <span class="text-white">CONTRIBUTE_TO_INFRASTRUCTURE</span>
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BGP Intelligence Report Modal -->
+  <div class="modal fade" id="bgpIntelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content" style="background-color: #0a0a0a; border: 2px solid var(--hud-primary); box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);">
+        <div class="modal-header" style="border-bottom: 1px solid var(--hud-primary);">
+          <h5 class="modal-title text-primary" style="text-shadow: 0 0 10px var(--hud-primary); letter-spacing: 3px;">
+            <i class="bi bi-shield-lock-fill me-2"></i>BGP INTELLIGENCE REPORT
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bgpIntelContent" style="font-family: var(--hud-font); min-height: 400px;">
+          <!-- Content will be injected by JavaScript -->
         </div>
       </div>
     </div>

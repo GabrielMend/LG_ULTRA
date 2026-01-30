@@ -38,6 +38,7 @@ def home(request):
     top_ans = None
     tier1 = None
     rpki = None
+    lg_data = None
     hide_navbar = request.GET.get("hide_navbar") == "1"
     
     # Shareable URL support: pre-fill form from query params
@@ -111,4 +112,5 @@ def home(request):
         'captcha_error': captcha_error,
         'command_value': command_param or request.POST.get('command', ''),
         'target_value': target_param or request.POST.get('target', ''),
+        'raw_bgp_data': lg_data,
     })
